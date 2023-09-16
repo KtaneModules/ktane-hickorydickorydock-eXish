@@ -495,6 +495,109 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             clockRotater.transform.localEulerAngles = Vector3.Lerp(initClockPos, finalClockPos, t);
         }
     }
+
+    //twitch plays
+    #pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"!{0} outputbombface [Output the module's bomb face to chat] | !{0} <1-12> <0-3> [Sets the specified orb to the specified number's associated color] | !{0} pedestal/submit [Presses the pedestal] | Multiple orbs can be set in one command by chaining";
+    #pragma warning restore 414
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        if (command.Equals("outputbombface"))
+        {
+            if (Application.isEditor)
+            {
+                yield return "sendtochaterror This command cannot be used in the TestHarness.";
+                yield break;
+            }
+            yield return null;
+            string bombFaceString = "This module's bomb face (" + bombFaceRowLength + " modules wide, " + bombFaceColLength + " modules tall) in reading order is: ";
+            for (int y = 0; y < bombFaceColLength; y++)
+            {
+                for (int x = 0; x < bombFaceRowLength; x++)
+                {
+                    if (bombFaceLayout[x, y] == "")
+                        bombFaceString += "N/A, ";
+                    else if (moduleX == x && moduleY == y)
+                        bombFaceString += "[Hickory Dickory Dock], ";
+                    else
+                        bombFaceString += bombFaceLayout[x, y] + ", ";
+                }
+            }
+            bombFaceString = bombFaceString.Substring(0, bombFaceString.Length - 2);
+            yield return "sendtochat " + bombFaceString;
+            yield return "sendtochat Note that the module itself is in square brackets.";
+            yield break;
+        }
+        if (command.EqualsAny("pedestal", "submit"))
+        {
+            if (orbsMoving || mode == 0)
+            {
+                yield return "sendtochaterror The pedestal cannot be pressed right now!";
+                yield break;
+            }
+            yield return null;
+            buttons[0].OnInteract();
+            yield break;
+        }
+        string[] parameters = command.Split(' ');
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            int checker;
+            if (i % 2 == 0 && (!int.TryParse(parameters[i], out checker) || checker < 1 || checker > 12))
+            {
+                yield return "sendtochaterror!f The specified orb '" + parameters[i] + "' is invalid!";
+                yield break;
+            }
+            if (i % 2 == 1 && (!int.TryParse(parameters[i], out checker) || checker < 0 || checker > 3))
+            {
+                yield return "sendtochaterror!f The specified number '" + parameters[i] + "' is invalid!";
+                yield break;
+            }
+        }
+        if (parameters.Length % 2 != 0)
+        {
+            yield return "sendtochaterror You must specify a number for each orb!";
+            yield break;
+        }
+        if (orbsMoving || mode != 1)
+        {
+            yield return "sendtochaterror The orbs cannot be set to a color right now!";
+            yield break;
+        }
+        yield return null;
+        for (int i = 0; i < parameters.Length; i+=2)
+        {
+            while (selectedColors[i] != int.Parse(parameters[i + 1]))
+            {
+                buttons[int.Parse(parameters[i])].OnInteract();
+                yield return new WaitForSeconds(.1f);
+            }
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        if (mode == 3)
+        {
+            buttons[0].OnInteract();
+            yield break;
+        }
+        if (mode == 2)
+        {
+            while (orbsMoving) yield return true;
+            buttons[0].OnInteract();
+        }
+        while (mode == 0 || orbsMoving) yield return true;
+        for (int i = 0; i < generatedStages.Count; i++)
+        {
+            while (generatedStages[i].answer != selectedColors[generatedStages[i].chimes - 1])
+            {
+                buttons[generatedStages[i].chimes].OnInteract();
+                yield return new WaitForSeconds(.1f);
+            }
+        }
+        buttons[0].OnInteract();
+    }
 }
 
 public class Stage
