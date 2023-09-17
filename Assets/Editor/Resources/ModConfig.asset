@@ -22,7 +22,7 @@ MonoBehaviour:
     PDF: https://ktane.timwi.de/PDF/Hickory%20Dickory%20Dock.pdf
 
 
-    Hickory Dickory Dock (hickoryDickoryDockModule) v1.0.1
+    Hickory Dickory Dock (hickoryDickoryDockModule) v1.0.2
 
     Module Idea by TasThiluna
 
@@ -31,6 +31,6 @@ MonoBehaviour:
     Implemented by eXish
 
     Twitch Plays supported'
-  version: 1.0.1
+  version: 1.0.2
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 9330223688a6e0644ad213aaa32525c8, type: 3}

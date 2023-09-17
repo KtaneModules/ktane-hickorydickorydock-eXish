@@ -17,6 +17,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
     public Transform numbers;
     public Transform clockRotater;
 
+    private string[,] origBombFaceLayout;
     private string[,] bombFaceLayout;
     private List<Stage> generatedStages = new List<Stage>();
     private List<int> stagesLeft = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
@@ -97,6 +98,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             var childSels = bombFace.GetValue<object[]>("Children");
             bombFaceRowLength = bombFace.GetValue<int>("ChildRowLength");
             bombFaceColLength = childSels.Length / bombFaceRowLength;
+            origBombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
             bombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
             for (int i = 0; i < childSels.Length; i++)
             {
@@ -104,7 +106,74 @@ public class HickoryDickoryDockScript : MonoBehaviour {
                 {
                     int x = childSels[i].GetValue<int>("x");
                     int y = childSels[i].GetValue<int>("y");
-                    bombFaceLayout[x, y] = childSels[i].GetValue<GameObject>("gameObject").GetComponent<KMBombModule>().ModuleDisplayName;
+                    GameObject modObject = childSels[i].GetValue<GameObject>("gameObject");
+                    if (modObject.GetComponent<KMBombModule>() == null)
+                    {
+                        switch (modObject.name)
+                        {
+                            case "WireSequenceComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Wire Sequence";
+                                bombFaceLayout[x, y] = "Wire Sequence";
+                                break;
+                            case "WireSetComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Wires";
+                                bombFaceLayout[x, y] = "Wires";
+                                break;
+                            case "WhosOnFirstComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Who's on First";
+                                bombFaceLayout[x, y] = "Who's on First";
+                                break;
+                            case "NeedyVentComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Needy Vent Gas";
+                                bombFaceLayout[x, y] = "Needy Vent Gas";
+                                break;
+                            case "SimonComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Simon Says";
+                                bombFaceLayout[x, y] = "Simon Says";
+                                break;
+                            case "PasswordComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Password";
+                                bombFaceLayout[x, y] = "Password";
+                                break;
+                            case "MorseComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Morse Code";
+                                bombFaceLayout[x, y] = "Morse Code";
+                                break;
+                            case "MemoryComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Memory";
+                                bombFaceLayout[x, y] = "Memory";
+                                break;
+                            case "InvisibleWallsComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Maze";
+                                bombFaceLayout[x, y] = "Maze";
+                                break;
+                            case "NeedyKnobComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Needy Knob";
+                                bombFaceLayout[x, y] = "Needy Knob";
+                                break;
+                            case "KeypadComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Keypad";
+                                bombFaceLayout[x, y] = "Keypad";
+                                break;
+                            case "VennWiresComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Complicated Wires";
+                                bombFaceLayout[x, y] = "Complicated Wires";
+                                break;
+                            case "ButtonComponent(Clone)":
+                                origBombFaceLayout[x, y] = "The Button";
+                                bombFaceLayout[x, y] = "The Button";
+                                break;
+                            default:
+                                origBombFaceLayout[x, y] = "Needy Capacitor";
+                                bombFaceLayout[x, y] = "Needy Capacitor";
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        origBombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
+                        bombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
+                    }
                     if (childSels[i].GetValue<Transform>("transform") == transform)
                     {
                         moduleX = x;
@@ -183,12 +252,12 @@ public class HickoryDickoryDockScript : MonoBehaviour {
         while (!stagesLeft.Contains(chimeChoice))
             chimeChoice = UnityEngine.Random.Range(1, 13);
         stagesLeft.Remove(chimeChoice);
-        string modName = "";
+        string modName = null;
         int x = dirOffsets[dirChoice][0] + moduleX;
         int y = dirOffsets[dirChoice][1] + moduleY;
-        while (modName == "")
+        while (modName == null)
         {
-            if (bombFaceLayout[x, y] != "")
+            if (bombFaceLayout[x, y] != null)
                 modName = bombFaceLayout[x, y];
             else
             {
@@ -197,7 +266,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             }
         }
         Stage newStage = new Stage(directions[dirChoice], modName, UnityEngine.Random.Range(0, 12), chimeChoice);
-        bombFaceLayout[x, y] = "";
+        bombFaceLayout[x, y] = null;
         generatedStages.Add(newStage);
         if (ValidDirections().Count == 0)
             stagesLeft = new List<int>();
@@ -217,7 +286,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             redo:
             if (x > -1 && x < bombFaceRowLength && y > -1 && y < bombFaceColLength)
             {
-                if (bombFaceLayout[x, y] != "")
+                if (bombFaceLayout[x, y] != null)
                     validOffsets.Add(i);
                 else
                 {
@@ -515,12 +584,12 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             {
                 for (int x = 0; x < bombFaceRowLength; x++)
                 {
-                    if (bombFaceLayout[x, y] == "")
+                    if (origBombFaceLayout[x, y] == null)
                         bombFaceString += "N/A, ";
                     else if (moduleX == x && moduleY == y)
                         bombFaceString += "[Hickory Dickory Dock], ";
                     else
-                        bombFaceString += bombFaceLayout[x, y] + ", ";
+                        bombFaceString += origBombFaceLayout[x, y] + ", ";
                 }
             }
             bombFaceString = bombFaceString.Substring(0, bombFaceString.Length - 2);
