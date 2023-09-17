@@ -107,7 +107,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
                     int x = childSels[i].GetValue<int>("x");
                     int y = childSels[i].GetValue<int>("y");
                     GameObject modObject = childSels[i].GetValue<GameObject>("gameObject");
-                    if (modObject.GetComponent<KMBombModule>() == null)
+                    if (modObject.GetComponent<KMBombModule>() == null && modObject.GetComponent<KMNeedyModule>() == null)
                     {
                         switch (modObject.name)
                         {
@@ -169,10 +169,15 @@ public class HickoryDickoryDockScript : MonoBehaviour {
                                 break;
                         }
                     }
-                    else
+                    else if (modObject.GetComponent<KMBombModule>() != null)
                     {
                         origBombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
                         bombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
+                    }
+                    else
+                    {
+                        origBombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
+                        bombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
                     }
                     if (childSels[i].GetValue<Transform>("transform") == transform)
                     {
