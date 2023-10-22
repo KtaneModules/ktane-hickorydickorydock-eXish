@@ -93,10 +93,15 @@ public class HickoryDickoryDockScript : MonoBehaviour {
         int validMods = 0;
         if (!Application.isEditor)
         {
+            Debug.Log("line1");
             var selectable = transform.GetComponent(selectableType);
+            Debug.Log("line2");
             var bombFace = selectable.GetValue<object>("Parent");
+            Debug.Log("line3");
             var childSels = bombFace.GetValue<object[]>("Children");
+            Debug.Log("line4");
             bombFaceRowLength = bombFace.GetValue<int>("ChildRowLength");
+            Debug.Log("line5");
             bombFaceColLength = childSels.Length / bombFaceRowLength;
             origBombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
             bombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
@@ -104,9 +109,13 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             {
                 if (childSels[i] != null)
                 {
+                    Debug.Log("" + i);
                     int x = childSels[i].GetValue<int>("x");
+                    Debug.Log("line6");
                     int y = childSels[i].GetValue<int>("y");
+                    Debug.Log("line7");
                     GameObject modObject = childSels[i].GetValue<GameObject>("gameObject");
+                    Debug.Log("line8");
                     if (modObject.GetComponent<KMBombModule>() == null && modObject.GetComponent<KMNeedyModule>() == null)
                     {
                         switch (modObject.name)
@@ -179,6 +188,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
                         origBombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
                         bombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
                     }
+                    Debug.Log("line9");
                     if (childSels[i].GetValue<Transform>("transform") == transform)
                     {
                         moduleX = x;
