@@ -39,7 +39,7 @@ public class HickoryDickoryDockScript : MonoBehaviour {
 
     bool ZenModeActive;
 
-    private static Type selectableType = ReflectionHelper.FindType("Selectable");
+    private static Type selectableType = ReflectionHelper.FindType("Selectable", "Assembly-CSharp");
 
     static int moduleIdCounter = 1;
     int moduleId;
@@ -90,7 +90,131 @@ public class HickoryDickoryDockScript : MonoBehaviour {
                 "The Very Annoying Button"
             });
         endSolveCount = bomb.GetSolvableModuleNames().Where(a => !ignoredModules.Contains(a)).ToList().Count;
-        StartCoroutine(WaitForBomb());
+        int validMods = 0;
+        if (!Application.isEditor)
+        {
+            var selectable = transform.GetComponent(selectableType);
+            var bombFace = selectable.GetValue<object>("Parent");
+            var childSels = bombFace.GetValue<object[]>("Children");
+            bombFaceRowLength = bombFace.GetValue<int>("ChildRowLength");
+            bombFaceColLength = childSels.Length / bombFaceRowLength;
+            origBombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
+            bombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
+            for (int i = 0; i < childSels.Length; i++)
+            {
+                if (childSels[i] != null)
+                {
+                    int x = childSels[i].GetValue<int>("x");
+                    int y = childSels[i].GetValue<int>("y");
+                    GameObject modObject = childSels[i].GetValue<GameObject>("gameObject");
+                    if (modObject.GetComponent<KMBombModule>() == null && modObject.GetComponent<KMNeedyModule>() == null)
+                    {
+                        switch (modObject.name)
+                        {
+                            case "WireSequenceComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Wire Sequence";
+                                bombFaceLayout[x, y] = "Wire Sequence";
+                                break;
+                            case "WireSetComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Wires";
+                                bombFaceLayout[x, y] = "Wires";
+                                break;
+                            case "WhosOnFirstComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Who's on First";
+                                bombFaceLayout[x, y] = "Who's on First";
+                                break;
+                            case "NeedyVentComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Needy Vent Gas";
+                                bombFaceLayout[x, y] = "Needy Vent Gas";
+                                break;
+                            case "SimonComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Simon Says";
+                                bombFaceLayout[x, y] = "Simon Says";
+                                break;
+                            case "PasswordComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Password";
+                                bombFaceLayout[x, y] = "Password";
+                                break;
+                            case "MorseComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Morse Code";
+                                bombFaceLayout[x, y] = "Morse Code";
+                                break;
+                            case "MemoryComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Memory";
+                                bombFaceLayout[x, y] = "Memory";
+                                break;
+                            case "InvisibleWallsComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Maze";
+                                bombFaceLayout[x, y] = "Maze";
+                                break;
+                            case "NeedyKnobComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Needy Knob";
+                                bombFaceLayout[x, y] = "Needy Knob";
+                                break;
+                            case "KeypadComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Keypad";
+                                bombFaceLayout[x, y] = "Keypad";
+                                break;
+                            case "VennWiresComponent(Clone)":
+                                origBombFaceLayout[x, y] = "Complicated Wires";
+                                bombFaceLayout[x, y] = "Complicated Wires";
+                                break;
+                            case "ButtonComponent(Clone)":
+                                origBombFaceLayout[x, y] = "The Button";
+                                bombFaceLayout[x, y] = "The Button";
+                                break;
+                            default:
+                                origBombFaceLayout[x, y] = "Needy Capacitor";
+                                bombFaceLayout[x, y] = "Needy Capacitor";
+                                break;
+                        }
+                    }
+                    else if (modObject.GetComponent<KMBombModule>() != null)
+                    {
+                        origBombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
+                        bombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
+                    }
+                    else
+                    {
+                        origBombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
+                        bombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
+                    }
+                    if (childSels[i].GetValue<Transform>("transform") == transform)
+                    {
+                        moduleX = x;
+                        moduleY = y;
+                    }
+                    else
+                        validMods++;
+                }
+            }
+        }
+        if (validMods > 0)
+        {
+            GetComponent<KMBombModule>().OnActivate += delegate ()
+            {
+                if (ZenModeActive)
+                {
+                    nextStageActivation = UnityEngine.Random.Range(60, 121);
+                    Debug.LogFormat("[Hickory Dickory Dock #{0}] The next activation will be in {1} seconds", moduleId, nextStageActivation);
+                }
+                else if ((int)bomb.GetTime() < 60)
+                {
+                    EnterNoStageMode();
+                    Debug.LogFormat("[Hickory Dickory Dock #{0}] There is not enough time for the module to activate, press the pedestal to solve the module", moduleId);
+                }
+                else
+                {
+                    nextStageActivation = (int)bomb.GetTime() - UnityEngine.Random.Range(60, (int)bomb.GetTime() + 1);
+                    Debug.LogFormat("[Hickory Dickory Dock #{0}] The next activation will be in {1} seconds", moduleId, (int)bomb.GetTime() - nextStageActivation);
+                }
+            };
+        }
+        else
+        {
+            EnterNoStageMode();
+            Debug.LogFormat("[Hickory Dickory Dock #{0}] No reachable modules detected on bomb face, press the pedestal to solve the module", moduleId);
+        }
         StartCoroutine(PlayClicks());
     }
 
@@ -258,140 +382,6 @@ public class HickoryDickoryDockScript : MonoBehaviour {
         numbers.localPosition += new Vector3(0, -.01f, 0);
         hourHand.localScale = new Vector3(0, 0, 0);
         minuteHand.localScale = new Vector3(0, 0, 0);
-    }
-
-    IEnumerator WaitForBomb()
-    {
-        int validMods = 0;
-        if (!Application.isEditor)
-        {
-            var selectable = transform.GetComponent(selectableType);
-            while (selectable == null)
-            {
-                yield return null;
-                selectable = transform.GetComponent(selectableType);
-            }
-            var bombFace = selectable.GetValue<object>("Parent");
-            var childSels = bombFace.GetValue<object[]>("Children");
-            bombFaceRowLength = bombFace.GetValue<int>("ChildRowLength");
-            bombFaceColLength = childSels.Length / bombFaceRowLength;
-            origBombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
-            bombFaceLayout = new string[bombFaceRowLength, bombFaceColLength];
-            for (int i = 0; i < childSels.Length; i++)
-            {
-                if (childSels[i] != null)
-                {
-                    int x = childSels[i].GetValue<int>("x");
-                    int y = childSels[i].GetValue<int>("y");
-                    GameObject modObject = childSels[i].GetValue<GameObject>("gameObject");
-                    if (modObject.GetComponent<KMBombModule>() == null && modObject.GetComponent<KMNeedyModule>() == null)
-                    {
-                        switch (modObject.name)
-                        {
-                            case "WireSequenceComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Wire Sequence";
-                                bombFaceLayout[x, y] = "Wire Sequence";
-                                break;
-                            case "WireSetComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Wires";
-                                bombFaceLayout[x, y] = "Wires";
-                                break;
-                            case "WhosOnFirstComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Who's on First";
-                                bombFaceLayout[x, y] = "Who's on First";
-                                break;
-                            case "NeedyVentComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Needy Vent Gas";
-                                bombFaceLayout[x, y] = "Needy Vent Gas";
-                                break;
-                            case "SimonComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Simon Says";
-                                bombFaceLayout[x, y] = "Simon Says";
-                                break;
-                            case "PasswordComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Password";
-                                bombFaceLayout[x, y] = "Password";
-                                break;
-                            case "MorseComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Morse Code";
-                                bombFaceLayout[x, y] = "Morse Code";
-                                break;
-                            case "MemoryComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Memory";
-                                bombFaceLayout[x, y] = "Memory";
-                                break;
-                            case "InvisibleWallsComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Maze";
-                                bombFaceLayout[x, y] = "Maze";
-                                break;
-                            case "NeedyKnobComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Needy Knob";
-                                bombFaceLayout[x, y] = "Needy Knob";
-                                break;
-                            case "KeypadComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Keypad";
-                                bombFaceLayout[x, y] = "Keypad";
-                                break;
-                            case "VennWiresComponent(Clone)":
-                                origBombFaceLayout[x, y] = "Complicated Wires";
-                                bombFaceLayout[x, y] = "Complicated Wires";
-                                break;
-                            case "ButtonComponent(Clone)":
-                                origBombFaceLayout[x, y] = "The Button";
-                                bombFaceLayout[x, y] = "The Button";
-                                break;
-                            default:
-                                origBombFaceLayout[x, y] = "Needy Capacitor";
-                                bombFaceLayout[x, y] = "Needy Capacitor";
-                                break;
-                        }
-                    }
-                    else if (modObject.GetComponent<KMBombModule>() != null)
-                    {
-                        origBombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
-                        bombFaceLayout[x, y] = modObject.GetComponent<KMBombModule>().ModuleDisplayName;
-                    }
-                    else
-                    {
-                        origBombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
-                        bombFaceLayout[x, y] = modObject.GetComponent<KMNeedyModule>().ModuleDisplayName;
-                    }
-                    if (childSels[i].GetValue<Transform>("transform") == transform)
-                    {
-                        moduleX = x;
-                        moduleY = y;
-                    }
-                    else
-                        validMods++;
-                }
-            }
-        }
-        if (validMods > 0)
-        {
-            GetComponent<KMBombModule>().OnActivate += delegate ()
-            {
-                if (ZenModeActive)
-                {
-                    nextStageActivation = UnityEngine.Random.Range(60, 121);
-                    Debug.LogFormat("[Hickory Dickory Dock #{0}] The next activation will be in {1} seconds", moduleId, nextStageActivation);
-                }
-                else if ((int)bomb.GetTime() < 60)
-                {
-                    EnterNoStageMode();
-                    Debug.LogFormat("[Hickory Dickory Dock #{0}] There is not enough time for the module to activate, press the pedestal to solve the module", moduleId);
-                }
-                else
-                {
-                    nextStageActivation = (int)bomb.GetTime() - UnityEngine.Random.Range(60, (int)bomb.GetTime() + 1);
-                    Debug.LogFormat("[Hickory Dickory Dock #{0}] The next activation will be in {1} seconds", moduleId, (int)bomb.GetTime() - nextStageActivation);
-                }
-            };
-        }
-        else
-        {
-            EnterNoStageMode();
-            Debug.LogFormat("[Hickory Dickory Dock #{0}] No reachable modules detected on bomb face, press the pedestal to solve the module", moduleId);
-        }
     }
 
     IEnumerator ShowStage(Stage stage)
