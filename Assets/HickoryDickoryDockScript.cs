@@ -225,6 +225,19 @@ public class HickoryDickoryDockScript : MonoBehaviour {
             mode = 1;
             StartCoroutine(EnterSubmission());
             Debug.LogFormat("[Hickory Dickory Dock #{0}] All non-ignored modules solved, entering submission mode", moduleId);
+            int[] correctAnswer = new int[12];
+            for (int i = 0; i < 12; i++)
+            {
+                for (int j = 0; j < generatedStages.Count; j++)
+                {
+                    if (generatedStages[j].chimes == i + 1)
+                    {
+                        correctAnswer[i] = generatedStages[j].answer;
+                        break;
+                    }
+                }
+            }
+            Debug.LogFormat("[Hickory Dickory Dock #{0}] The correct answer (from 1 to 12): {1}", moduleId, correctAnswer.Join());
         }
         if (mode == 0 && (int)bomb.GetTime() == nextStageActivation && stagesLeft.Count != 0)
         {
